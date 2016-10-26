@@ -85,7 +85,7 @@ namespace UwpTriangle
                 }
             }
 
-            using (var nativeObject = SharpDX.ComObject.As<DXGI.ISwapChainPanelNative>(panel))
+            using (var nativeObject = ComObject.As<DXGI.ISwapChainPanelNative>(panel))
             {
                 nativeObject.SwapChain = _swapChain;
             }
@@ -159,7 +159,6 @@ namespace UwpTriangle
             _context.OutputMerger.SetRenderTargets(_depthStencilView, _renderView);
             _context.ClearDepthStencilView(_depthStencilView, D3D.DepthStencilClearFlags.Depth, 1.0f, 0);
             _context.ClearRenderTargetView(_renderView, new RawColor4(1f, 0.5f, 0.2f, 1f));
-
 
             var view = SharpDX.Matrix.LookAtLH(new Vector3(0, 0, -5), new Vector3(0, 0, 0), Vector3.UnitY);
             var proj = SharpDX.Matrix.PerspectiveFovLH((float)Math.PI / 4.0f, (float)(panel.RenderSize.Width / panel.RenderSize.Height), 0.1f, 100.0f);
