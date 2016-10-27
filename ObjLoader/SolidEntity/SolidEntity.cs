@@ -1,14 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using D3D = SharpDX.Direct3D11;
-using DXGI = SharpDX.DXGI;
 
-namespace ObjLoader
+namespace ObjLoader.SolidEntity
 {
-    public class GreenRect : IDrawEntity, IDisposable
+    public class SolidEntity : IDrawEntity, IDisposable
     {
         public void InitDraw(DrawManager drawMan)
         {
@@ -21,7 +15,7 @@ namespace ObjLoader
 
         public void Render(DrawManager drawMan)
         {
-            drawMan.Context.ClearRenderTargetView(drawMan.RenderView, SharpDX.Color.Green);
+            drawMan.Context.ClearRenderTargetView(drawMan.RenderView, new SharpDX.Color(0x02, 0x88, 0xd1));
         }
 
         public void Dispose()

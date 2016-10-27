@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ using Windows.Graphics.Display;
 using Windows.UI.Composition;
 using Windows.UI.Xaml.Controls;
 using SharpDX;
+using SharpDX.D3DCompiler;
 using SharpDX.Direct3D;
 using SharpDX.Mathematics.Interop;
 using CompositionTarget = Windows.UI.Xaml.Media.CompositionTarget;
@@ -21,8 +23,8 @@ namespace ObjLoader
         private SwapChainPanel _panel;
         private ViewportF _viewport;
         private List<IDrawEntity> _entities = new List<IDrawEntity>();
-        private D3D.Texture2D _backBufffer;
         private D3D.Texture2D _depthBuffer;
+        private D3D.Texture2D _backBuffer;
 
         public D3D.Device4 Device { get; private set; }
         public D3D.DeviceContext3 Context { get; private set; }
@@ -54,6 +56,8 @@ namespace ObjLoader
         {
             Width = _panel.RenderSize.Width;
             Height = _panel.RenderSize.Height;
+
+            // Initialize device, context and swap chain.
 
             using (var defDevice = new D3D.Device(DriverType.Hardware, D3D.DeviceCreationFlags.Debug))
             {
@@ -90,8 +94,7 @@ namespace ObjLoader
                 nativePanel.SwapChain = SwapChain;
             }
 
-            _backBufffer = D3D.Texture2D.FromSwapChain<D3D.Texture2D>(SwapChain, 0);
-            RenderView = new D3D.RenderTargetView1(Device, _backBufffer);
+            // Initialize depth and render views.
 
             _depthBuffer = new D3D.Texture2D(Device, new D3D.Texture2DDescription()
             {
@@ -108,10 +111,15 @@ namespace ObjLoader
                 Dimension = D3D.DepthStencilViewDimension.Texture2D
             });
 
-            Context.OutputMerger.SetRenderTargets(DepthView, RenderView);
+            _backBuffer = D3D.Resource.FromSwapChain<D3D.Texture2D>(SwapChain, 0);
+            RenderView = new D3D.RenderTargetView1(Device, _backBuffer);
+
+            // Initialize viewport.
 
             _viewport = new ViewportF(0, 0, (float)Width, (float)Height, 0, 1);
             Context.Rasterizer.SetViewport(_viewport);
+
+            // Initialize others.
 
             foreach (var drawEntity in _entities)
             {
@@ -137,15 +145,21 @@ namespace ObjLoader
             Context = null;
             Device.Dispose();
             Device = null;
-            _backBufffer = null;
+            _backBuffer.Dispose();
+            _backBuffer = null;
+            RenderView.Dispose();
             RenderView = null;
+            _depthBuffer.Dispose();
             _depthBuffer = null;
+            DepthView.Dispose();
             DepthView = null;
         }
 
         private void CompositionTarget_Rendering(object sender, object e)
         {
-            Context.ClearDepthStencilView(DepthView, D3D.DepthStencilClearFlags.Depth | D3D.DepthStencilClearFlags.Stencil, 1, 0);
+            Context.OutputMerger.SetRenderTargets(DepthView, RenderView);
+
+            Context.ClearDepthStencilView(DepthView, D3D.DepthStencilClearFlags.Depth, 1.0f, 0);
             Context.ClearRenderTargetView(RenderView, Color.Black);
 
             foreach (var drawEntity in _entities)
