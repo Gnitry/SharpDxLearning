@@ -15,11 +15,11 @@ namespace ObjLoader.Triangle
         private D3D.VertexBufferBinding _vertexBinding;
         private D3D.InputLayout _inputLayout;
 
-        private readonly Vector4[] _vertexes = new[]
+        private readonly Vector4[] _vertices = new[]
             {
-                new Vector4(-0.5f, 0.0f, 0.0f, 1.0f),
-                new Vector4(0.0f, 0.5f, 0.0f, 1.0f),
-                new Vector4(0.5f, 0.0f, 0.0f, 1.0f),
+                new Vector4(-0.5f, 0.0f, 0.5f, 1f),
+                new Vector4(0.0f, 0.5f, 0.5f, 1f),
+                new Vector4(0.5f, 0.0f, 0.5f, 1f),
             };
 
         public void InitDraw(DrawManager drawMan)
@@ -40,7 +40,7 @@ namespace ObjLoader.Triangle
                 _pixelShader = new D3D.PixelShader(drawMan.Device, byteCode);
             }
 
-            _vertexBuffer = D3D.Buffer.Create(drawMan.Device, D3D.BindFlags.VertexBuffer, _vertexes);
+            _vertexBuffer = D3D.Buffer.Create(drawMan.Device, D3D.BindFlags.VertexBuffer, _vertices);
             _vertexBinding = new D3D.VertexBufferBinding(_vertexBuffer, Utilities.SizeOf<Vector4>(), 0);
         }
 
@@ -56,9 +56,11 @@ namespace ObjLoader.Triangle
             drawMan.Context.InputAssembler.SetVertexBuffers(0, _vertexBinding);
             drawMan.Context.InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
             drawMan.Context.InputAssembler.InputLayout = _inputLayout;
+
             drawMan.Context.VertexShader.Set(_vertexShader);
             drawMan.Context.PixelShader.Set(_pixelShader);
-            drawMan.Context.Draw(_vertexes.Length, 0);
+
+            drawMan.Context.Draw(_vertices.Length, 0);
         }
     }
 }

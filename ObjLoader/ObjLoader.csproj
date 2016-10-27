@@ -89,12 +89,14 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- A reference to the entire .Net Framework and Windows SDK are automatically included -->
+    <None Include="ObjEntity\cube.obj" />
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ObjEntity\ObjEntity.cs" />
     <Compile Include="SolidEntity\SolidEntity.cs" />
     <Compile Include="IDrawEntity.cs" />
     <Compile Include="MainPage.xaml.cs">
@@ -111,6 +113,7 @@
     <None Include="ObjLoader_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="ObjEntity\objEntity.fx" />
     <Content Include="Properties\Default.rd.xml" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
     <Content Include="Assets\SplashScreen.scale-200.png" />

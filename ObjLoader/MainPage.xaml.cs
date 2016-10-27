@@ -28,7 +28,11 @@ namespace ObjLoader
         {
             this.InitializeComponent();
 
-            _drawMan = new DrawManager(panel, new SolidEntity.SolidEntity(), new Triangle.Triangle());
+            _drawMan = new DrawManager(panel,
+//                new SolidEntity.SolidEntity(),
+//                new Triangle.Triangle(),
+                new ObjEntity.ObjEntity()
+                );
         }
 
         private void Panel_OnLoaded(object sender, RoutedEventArgs e)
