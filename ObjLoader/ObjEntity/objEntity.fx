@@ -1,6 +1,11 @@
-﻿float4 vs(float4 pos : POSITION) : SV_POSITION
+﻿cbuffer vsBuffer
 {
-	return pos;
+	matrix wvp;
+}
+
+float4 vs(float4 pos : POSITION) : SV_POSITION
+{
+	return mul(pos, wvp);
 }
 
 float4 ps(float4 pos: SV_POSITION) : SV_TARGET

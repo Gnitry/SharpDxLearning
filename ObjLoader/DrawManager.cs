@@ -35,6 +35,8 @@ namespace ObjLoader
         public double Width { get; private set; }
         public double Height { get; private set; }
 
+        public Stopwatch Time { get; private set; } = new Stopwatch();
+
         public DrawManager(SwapChainPanel panel, params IDrawEntity[] entities)
         {
             _panel = panel;
@@ -125,6 +127,8 @@ namespace ObjLoader
             {
                 drawEntity.InitDraw(this);
             }
+
+            Time.Start();
 
             CompositionTarget.Rendering += CompositionTarget_Rendering;
         }
