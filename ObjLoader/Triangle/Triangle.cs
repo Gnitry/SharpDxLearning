@@ -15,31 +15,33 @@ namespace ObjLoader.Triangle
         private D3D.VertexBufferBinding _vertexBinding;
         private D3D.InputLayout _inputLayout;
 
-        private readonly RawVector4[] _vertexes =
-        {
-            new RawVector4(-0.5f, 0.0f, 0.0f, 1.0f),
-            new RawVector4(0.0f, 0.5f, 0.0f, 1.0f),
-            new RawVector4(0.5f, 0.0f, 0.0f, 1.0f),
-        };
+        private readonly Vector4[] _vertexes = new[]
+            {
+                new Vector4(-0.5f, 0.0f, 0.0f, 1.0f),
+                new Vector4(0.0f, 0.5f, 0.0f, 1.0f),
+                new Vector4(0.5f, 0.0f, 0.0f, 1.0f),
+            };
 
         public void InitDraw(DrawManager drawMan)
         {
-            _vertexBuffer = D3D.Buffer.Create(drawMan.Device, D3D.BindFlags.VertexBuffer, _vertexes);
-            _vertexBinding = new D3D.VertexBufferBinding(_vertexBuffer, Utilities.SizeOf<RawVector4>(), 0);
-
             using (var byteCode = ShaderBytecode.CompileFromFile(@"Triangle\triangle.fx", "vs", "vs_4_0", ShaderFlags.Debug))
             {
                 _vertexShader = new D3D.VertexShader(drawMan.Device, byteCode);
-                _inputLayout = new D3D.InputLayout(drawMan.Device, byteCode, new D3D.InputElement[]
+
+                var inputElements = new D3D.InputElement[]
                 {
                     new D3D.InputElement("POSITION", 0, Format.R32G32B32A32_Float, 0, 0),
-                });
+                };
+                _inputLayout = new D3D.InputLayout(drawMan.Device, byteCode, inputElements);
             }
 
             using (var byteCode = ShaderBytecode.CompileFromFile(@"Triangle\triangle.fx", "ps", "ps_4_0", ShaderFlags.Debug))
             {
                 _pixelShader = new D3D.PixelShader(drawMan.Device, byteCode);
             }
+
+            _vertexBuffer = D3D.Buffer.Create(drawMan.Device, D3D.BindFlags.VertexBuffer, _vertexes);
+            _vertexBinding = new D3D.VertexBufferBinding(_vertexBuffer, Utilities.SizeOf<Vector4>(), 0);
         }
 
         public void DeinitDraw()

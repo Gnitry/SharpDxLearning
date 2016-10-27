@@ -68,15 +68,14 @@ namespace ObjLoader
                 BufferCount = 2,
                 Flags = DXGI.SwapChainFlags.None,
                 Format = DXGI.Format.B8G8R8A8_UNorm,
-                Height = (int)(Height * pixelScale),
                 Width = (int)(Width * pixelScale),
+                Height = (int)(Height * pixelScale),
                 SampleDescription = new DXGI.SampleDescription(1, 0),
                 Scaling = DXGI.Scaling.Stretch,
                 Stereo = false,
                 SwapEffect = DXGI.SwapEffect.FlipSequential,
                 Usage = DXGI.Usage.BackBuffer | DXGI.Usage.RenderTargetOutput
             };
-            Context.OutputMerger.SetRenderTargets(DepthView, RenderView);
 
             using (var dxgiDevice = Device.QueryInterface<DXGI.Device>())
             {
@@ -91,26 +90,28 @@ namespace ObjLoader
                 nativePanel.SwapChain = SwapChain;
             }
 
-            _viewport = new ViewportF(0, 0, (float)Width, (float)Height, 0, 1);
-
-
             _backBufffer = D3D.Texture2D.FromSwapChain<D3D.Texture2D>(SwapChain, 0);
             RenderView = new D3D.RenderTargetView1(Device, _backBufffer);
 
             _depthBuffer = new D3D.Texture2D(Device, new D3D.Texture2DDescription()
             {
-                ArraySize = 1,
-                BindFlags = D3D.BindFlags.DepthStencil,
-                CpuAccessFlags = D3D.CpuAccessFlags.None,
                 Format = DXGI.Format.D24_UNorm_S8_UInt,
-                Height = (int)Height,
-                Width = (int)Width,
+                ArraySize = 1,
                 MipLevels = 1,
-                OptionFlags = D3D.ResourceOptionFlags.None,
+                Width = swapChainDesc.Width,
+                Height = swapChainDesc.Height,
                 SampleDescription = new DXGI.SampleDescription(1, 0),
-                Usage = D3D.ResourceUsage.Default
+                BindFlags = D3D.BindFlags.DepthStencil,
             });
-            DepthView = new D3D.DepthStencilView(Device, _depthBuffer);
+            DepthView = new D3D.DepthStencilView(Device, _depthBuffer, new D3D.DepthStencilViewDescription()
+            {
+                Dimension = D3D.DepthStencilViewDimension.Texture2D
+            });
+
+            Context.OutputMerger.SetRenderTargets(DepthView, RenderView);
+
+            _viewport = new ViewportF(0, 0, (float)Width, (float)Height, 0, 1);
+            Context.Rasterizer.SetViewport(_viewport);
 
             foreach (var drawEntity in _entities)
             {
