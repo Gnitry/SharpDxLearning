@@ -23,13 +23,13 @@ namespace ObjLoader
     public sealed partial class MainPage : Page
     {
         private DrawManager _drawMan;
-        private GreenRect _greenRect = new GreenRect();
 
         public MainPage()
         {
             this.InitializeComponent();
 
-            _drawMan = new DrawManager(panel, _greenRect);
+            _drawMan = new DrawManager(panel, new Triangle.Triangle());
+            //            _drawMan = new DrawManager(panel, new GreenRect());
         }
 
         private void Panel_OnLoaded(object sender, RoutedEventArgs e)

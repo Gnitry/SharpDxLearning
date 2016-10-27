@@ -9,6 +9,7 @@ using Windows.UI.Composition;
 using Windows.UI.Xaml.Controls;
 using SharpDX;
 using SharpDX.Direct3D;
+using SharpDX.Mathematics.Interop;
 using CompositionTarget = Windows.UI.Xaml.Media.CompositionTarget;
 using D3D = SharpDX.Direct3D11;
 using DXGI = SharpDX.DXGI;
@@ -20,10 +21,14 @@ namespace ObjLoader
         private SwapChainPanel _panel;
         private ViewportF _viewport;
         private List<IDrawEntity> _entities = new List<IDrawEntity>();
+        private D3D.Texture2D _backBufffer;
+        private D3D.Texture2D _depthBuffer;
 
         public D3D.Device4 Device { get; private set; }
         public D3D.DeviceContext3 Context { get; private set; }
         public DXGI.SwapChain1 SwapChain { get; private set; }
+        public D3D.RenderTargetView1 RenderView { get; private set; }
+        public D3D.DepthStencilView DepthView { get; private set; }
 
         public double Width { get; private set; }
         public double Height { get; private set; }
@@ -32,16 +37,6 @@ namespace ObjLoader
         {
             _panel = panel;
             _entities = entities.ToList();
-        }
-
-        private void CompositionTarget_Rendering(object sender, object e)
-        {
-            foreach (var drawEntity in _entities)
-            {
-                drawEntity.Render(this);
-            }
-
-            SwapChain.Present(1, DXGI.PresentFlags.None);
         }
 
         public void Dispose()
@@ -81,6 +76,7 @@ namespace ObjLoader
                 SwapEffect = DXGI.SwapEffect.FlipSequential,
                 Usage = DXGI.Usage.BackBuffer | DXGI.Usage.RenderTargetOutput
             };
+            Context.OutputMerger.SetRenderTargets(DepthView, RenderView);
 
             using (var dxgiDevice = Device.QueryInterface<DXGI.Device>())
             {
@@ -96,6 +92,25 @@ namespace ObjLoader
             }
 
             _viewport = new ViewportF(0, 0, (float)Width, (float)Height, 0, 1);
+
+
+            _backBufffer = D3D.Texture2D.FromSwapChain<D3D.Texture2D>(SwapChain, 0);
+            RenderView = new D3D.RenderTargetView1(Device, _backBufffer);
+
+            _depthBuffer = new D3D.Texture2D(Device, new D3D.Texture2DDescription()
+            {
+                ArraySize = 1,
+                BindFlags = D3D.BindFlags.DepthStencil,
+                CpuAccessFlags = D3D.CpuAccessFlags.None,
+                Format = DXGI.Format.D24_UNorm_S8_UInt,
+                Height = (int)Height,
+                Width = (int)Width,
+                MipLevels = 1,
+                OptionFlags = D3D.ResourceOptionFlags.None,
+                SampleDescription = new DXGI.SampleDescription(1, 0),
+                Usage = D3D.ResourceUsage.Default
+            });
+            DepthView = new D3D.DepthStencilView(Device, _depthBuffer);
 
             foreach (var drawEntity in _entities)
             {
@@ -121,6 +136,23 @@ namespace ObjLoader
             Context = null;
             Device.Dispose();
             Device = null;
+            _backBufffer = null;
+            RenderView = null;
+            _depthBuffer = null;
+            DepthView = null;
+        }
+
+        private void CompositionTarget_Rendering(object sender, object e)
+        {
+            Context.ClearDepthStencilView(DepthView, D3D.DepthStencilClearFlags.Depth | D3D.DepthStencilClearFlags.Stencil, 1, 0);
+            Context.ClearRenderTargetView(RenderView, Color.Black);
+
+            foreach (var drawEntity in _entities)
+            {
+                drawEntity.Render(this);
+            }
+
+            SwapChain.Present(1, DXGI.PresentFlags.None);
         }
     }
 }
