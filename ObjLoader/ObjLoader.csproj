@@ -89,10 +89,8 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- A reference to the entire .Net Framework and Windows SDK are automatically included -->
-    <Content Include="ObjEntity\cube.obj">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="ObjEntity\kaka.obj">
+    <Content Include="background_empty.png" />
+    <Content Include="Building\tunnel.obj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Include="project.json" />
@@ -101,7 +99,7 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ObjEntity\ObjEntity.cs" />
+    <Compile Include="Building\Building.cs" />
     <Compile Include="SolidEntity\SolidEntity.cs" />
     <Compile Include="IDrawEntity.cs" />
     <Compile Include="MainPage.xaml.cs">
@@ -117,7 +115,7 @@
     </AppxManifest>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="ObjEntity\objEntity.fx" />
+    <Content Include="Building\building.fx" />
     <Content Include="Properties\Default.rd.xml" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
     <Content Include="Assets\SplashScreen.scale-200.png" />
@@ -145,6 +143,9 @@
       <Project>{833895ea-ed67-4f21-938f-2b8f6d3cd51a}</Project>
       <Name>FileFormatWavefront</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="ObjEntity\" />
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>

@@ -20,9 +20,9 @@ namespace ObjLoader
 {
     public class DrawManager : IDisposable
     {
-        private SwapChainPanel _panel;
+        private readonly SwapChainPanel _panel;
         private ViewportF _viewport;
-        private List<IDrawEntity> _entities = new List<IDrawEntity>();
+        private readonly List<IDrawEntity> _entities;
         private D3D.Texture2D _depthBuffer;
         private D3D.Texture2D _backBuffer;
 
@@ -80,7 +80,7 @@ namespace ObjLoader
                 Scaling = DXGI.Scaling.Stretch,
                 Stereo = false,
                 SwapEffect = DXGI.SwapEffect.FlipSequential,
-                Usage = DXGI.Usage.BackBuffer | DXGI.Usage.RenderTargetOutput
+                Usage = DXGI.Usage.BackBuffer | DXGI.Usage.RenderTargetOutput,
             };
 
             using (var dxgiDevice = Device.QueryInterface<DXGI.Device>())
@@ -113,8 +113,43 @@ namespace ObjLoader
                 Dimension = D3D.DepthStencilViewDimension.Texture2D
             });
 
+            //            Context.OutputMerger.BlendState = new D3D.BlendState1(Device, new D3D.BlendStateDescription1()
+            //            {
+            //                AlphaToCoverageEnable = false,
+            //                IndependentBlendEnable = true
+            //            });
+            var blendDesc = new D3D.BlendStateDescription1();
+            blendDesc.RenderTarget[0].IsBlendEnabled = true;
+            blendDesc.RenderTarget[0].SourceBlend = D3D.BlendOption.SourceAlpha;
+            blendDesc.RenderTarget[0].DestinationBlend = D3D.BlendOption.InverseSourceAlpha;
+            blendDesc.RenderTarget[0].BlendOperation = D3D.BlendOperation.Add;
+            blendDesc.RenderTarget[0].SourceAlphaBlend = D3D.BlendOption.One;
+            blendDesc.RenderTarget[0].DestinationAlphaBlend = D3D.BlendOption.Zero;
+            blendDesc.RenderTarget[0].AlphaBlendOperation = D3D.BlendOperation.Add;
+            blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D.ColorWriteMaskFlags.All;
+            var blendState = new D3D.BlendState1(Device, blendDesc);
+            Context.OutputMerger.SetBlendState(blendState);
+
+
             _backBuffer = D3D.Resource.FromSwapChain<D3D.Texture2D>(SwapChain, 0);
             RenderView = new D3D.RenderTargetView1(Device, _backBuffer);
+
+            // Initialize rasterizer.
+            var rasterStateDesc = new D3D.RasterizerStateDescription2()
+            {
+                CullMode = D3D.CullMode.Back,
+                DepthBias = 0,
+                DepthBiasClamp = 0,
+                FillMode = D3D.FillMode.Solid,
+                IsAntialiasedLineEnabled = false,
+                IsDepthClipEnabled = true,
+                IsFrontCounterClockwise = false,
+                IsMultisampleEnabled = false,
+                IsScissorEnabled = false,
+                SlopeScaledDepthBias = 0
+            };
+            var rasterState = new D3D.RasterizerState2(Device, rasterStateDesc);
+            Context.Rasterizer.State = rasterState;
 
             // Initialize viewport.
 
@@ -164,7 +199,7 @@ namespace ObjLoader
             Context.OutputMerger.SetRenderTargets(DepthView, RenderView);
 
             Context.ClearDepthStencilView(DepthView, D3D.DepthStencilClearFlags.Depth, 1.0f, 0);
-            Context.ClearRenderTargetView(RenderView, Color.Black);
+            Context.ClearRenderTargetView(RenderView, new Color(0x2D, 0x45, 0x64, 0xFF));
 
             foreach (var drawEntity in _entities)
             {

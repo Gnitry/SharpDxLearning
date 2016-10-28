@@ -8,6 +8,7 @@
     mc:Ignorable="d">
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Image Source="background_empty.png" Stretch="Fill"/>
         <SwapChainPanel x:Name="panel" Loaded="Panel_OnLoaded" Unloaded="Panel_OnUnloaded"/>
     </Grid>
 </Page>

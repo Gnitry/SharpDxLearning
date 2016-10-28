@@ -29,10 +29,11 @@ namespace ObjLoader
             this.InitializeComponent();
 
             _drawMan = new DrawManager(panel,
-//                new SolidEntity.SolidEntity(),
-//                new Triangle.Triangle(),
-//                new ObjEntity.ObjEntity(@"ObjEntity\cube.obj"),
-                new ObjEntity.ObjEntity(@"ObjEntity\kaka.obj")
+                //                new SolidEntity.SolidEntity(),
+                //                new Triangle.Triangle(),
+                //                new ObjEntity.ObjEntity(@"ObjEntity\cube.obj"),
+                //                new ObjEntity.ObjEntity(@"Building\tunnel.obj"),
+                new Building.Building(@"Building\tunnel.obj")
                 );
         }
 
