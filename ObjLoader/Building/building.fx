@@ -29,6 +29,7 @@ GsInput Vs(VsInput input)
 {
 	GsInput res;
 	res.pos = mul(input.pos, wvp);
+	//res.pos = input.pos;
 	return res;
 }
 
@@ -48,52 +49,53 @@ void CreateVertex(inout TriangleStream<PsInput> outStream, float4 pos, bool isOu
 [maxvertexcount(12)]
 void Gs(triangleadj GsInput inputs[6], inout TriangleStream<PsInput> outStream)
 {
-	float thickness = 0.05;
+	float thickness = 0.1;
 
 	CreateVertex(outStream, inputs[0].pos, false);
 	CreateVertex(outStream, inputs[2].pos, false);
 	CreateVertex(outStream, inputs[4].pos, false);
 	outStream.RestartStrip();
+
+	float4 pA = inputs[0].pos;
+	float4 pB = inputs[2].pos;
+	float4 pC = inputs[4].pos;
+	float3 viewDirection = ((pA + pB + pC) / 3).xyz;
+	viewDirection = -normalize(viewDirection);
+	float3 faceNormal = normalize(cross((pB-pA).xyz, (pC-pA).xyz));
+	float dotView = dot(faceNormal, viewDirection);
+	bool isFrontFace = dotView > 0;
 	
-	float4 pA, pB, pC;
+	if (!isFrontFace) return;
+
 	for (uint i = 0; i < 6; i += 2) {
 		uint nextI = (i + 2) % 6;
 		pA = inputs[i].pos;
 		pB = inputs[i + 1].pos;
 		pC = inputs[nextI].pos;
 
-		float3 viewDirection = - normalize((pA.xyz + pB.xyz + pC.xyz)/3);
-		float3 faceNormal = normalize(cross((pB - pA).xyz, (pC - pA).xyz));
-		float dotView = dot(faceNormal, viewDirection);
+		float3 viewDirection = ((pA + pB + pC) / 3).xyz;
+		viewDirection = -normalize(viewDirection);
+		faceNormal = normalize(cross((pB - pA).xyz, (pC - pA).xyz));
+		dotView = dot(faceNormal, viewDirection);
 
-		if (dotView < 0) {
+		if (dotView <= 0) {
 			float4 pos = inputs[i].pos;
-			pos.x -= thickness;
-			pos.y -= thickness;
-			CreateVertex(outStream, pos, true);
-
-			pos = inputs[i].pos;
-			pos.x += thickness;
-			pos.y += thickness;
+			pos.x -= thickness / 2;
+			pos.y -= thickness / 2;
 			CreateVertex(outStream, pos, true);
 
 			pos = inputs[nextI].pos;
+			pos.x -= thickness / 2;
+			pos.y += thickness / 2;
 			CreateVertex(outStream, pos, true);
 
-			outStream.RestartStrip();
-
-			pos = inputs[i].pos;
-			pos.x -= thickness;
-			pos.y += thickness;
-			CreateVertex(outStream, pos, true);
-
-			pos = inputs[i].pos;
 			pos.x += thickness;
 			pos.y -= thickness;
 			CreateVertex(outStream, pos, true);
 
-			pos = inputs[nextI].pos;
-			CreateVertex(outStream, pos, true);
+			pos = inputs[i].pos;
+			pos.x += thickness / 2;
+			//CreateVertex(outStream, pos, true);
 
 			outStream.RestartStrip();
 		}

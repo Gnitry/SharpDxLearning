@@ -19,9 +19,9 @@ namespace ObjLoader.Building
         [StructLayout(LayoutKind.Sequential)]
         private struct VsInput
         {
-            public Vector3 Pos;
+            public Vector4 Pos;
 
-            public VsInput(Vector3 pos)
+            public VsInput(Vector4 pos)
             {
                 Pos = pos;
             }
@@ -59,7 +59,7 @@ namespace ObjLoader.Building
             // Get vertices.
             _vertices = obj.Model.Vertices.Select(v =>
             {
-                var pos = new Vector3(v.x, v.y, v.z);
+                var pos = new Vector4(v.x / 2f, v.y / 2f, v.z / 2f, 1.0f);
                 return new VsInput(pos);
             }).ToArray();
 
@@ -67,11 +67,14 @@ namespace ObjLoader.Building
             var triangles = new List<uint>();
             foreach (var face in obj.Model.UngroupedFaces)
             {
-                for (var i = 1; i < face.Indices.Count - 1; i++)
+                var indicies = face.Indices.ToList();
+                for (int i = indicies.Count - 2; i >= 0; i--) if (indicies[i].vertex == indicies[i + 1].vertex) indicies.RemoveAt(i + 1);
+                if (indicies.Count > 3 && indicies.First().vertex == indicies.Last().vertex) indicies.RemoveAt(indicies.Count);
+                for (var i = 1; i < indicies.Count - 1; i++)
                 {
-                    triangles.Add((uint)face.Indices[0].vertex);
-                    triangles.Add((uint)face.Indices[i].vertex);
-                    triangles.Add((uint)face.Indices[i + 1].vertex);
+                    triangles.Add((uint)indicies[0].vertex);
+                    triangles.Add((uint)indicies[i].vertex);
+                    triangles.Add((uint)indicies[i + 1].vertex);
                 }
             }
 
@@ -153,7 +156,7 @@ namespace ObjLoader.Building
                 _vertexShader = new D3D.VertexShader(drawMan.Device, bytecode);
                 _inputLayout = new D3D.InputLayout(drawMan.Device, bytecode, new[]
                 {
-                    new D3D.InputElement("POSITION", 0, DXGI.Format.R32G32B32_Float, 0, 0),
+                    new D3D.InputElement("POSITION", 0, DXGI.Format.R32G32B32A32_Float, 0, 0),
                 });
             }
 
@@ -184,12 +187,13 @@ namespace ObjLoader.Building
 
         private void CalcWvp(DrawManager drawMan)
         {
-            float k = 10;
+            float k = 6;
             var periodX = 8000.0 * k;
             var periodY = 16000.0 * k;
             var periodZ = 32000.0 * k;
-            _wvp = 
+            _wvp =
                 Matrix.RotationY((float)(2 * Math.PI * (drawMan.Time.ElapsedMilliseconds % periodX) / periodX))
+                * Matrix.RotationY((float) (Math.PI/2))
                 * Matrix.RotationX((float)(2 * Math.PI * (drawMan.Time.ElapsedMilliseconds % periodY) / periodY))
                 * Matrix.RotationZ((float)(2 * Math.PI * (drawMan.Time.ElapsedMilliseconds % periodZ) / periodZ))
                 * _view
