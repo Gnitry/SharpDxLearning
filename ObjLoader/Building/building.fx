@@ -38,10 +38,14 @@ void CreateVertex(inout TriangleStream<PsInput> outStream, float4 pos, bool isOu
 	PsInput triang;
 	triang.pos = pos;
 
-	if (isOutline)
-		triang.col = float4(1, 1, 1, 1);
+	if (isOutline) {
+		triang.col = float4(1, 1, 1, 0.5);
+	}
 	else
+	{
+		triang.pos.x += 1.5;
 		triang.col = faceColor;
+	}
 
 	outStream.Append(triang);
 }
@@ -50,6 +54,7 @@ void CreateVertex(inout TriangleStream<PsInput> outStream, float4 pos, bool isOu
 void Gs(triangleadj GsInput inputs[6], inout TriangleStream<PsInput> outStream)
 {
 	float thickness = 0.1;
+	float zbias = 0.001;
 
 	CreateVertex(outStream, inputs[0].pos, false);
 	CreateVertex(outStream, inputs[2].pos, false);
@@ -61,8 +66,8 @@ void Gs(triangleadj GsInput inputs[6], inout TriangleStream<PsInput> outStream)
 	float4 pC = inputs[4].pos;
 	float3 viewDirection = ((pA + pB + pC) / 3).xyz;
 	viewDirection = -normalize(viewDirection);
-	float3 faceNormal = normalize(cross((pB-pA).xyz, (pC-pA).xyz));
-	float dotView = dot(faceNormal, viewDirection);
+	float3 origFaceNormal = normalize(cross((pB-pA).xyz, (pC-pA).xyz));
+	float dotView = dot(origFaceNormal, viewDirection);
 	bool isFrontFace = dotView > 0;
 	
 	if (!isFrontFace) return;
@@ -75,27 +80,21 @@ void Gs(triangleadj GsInput inputs[6], inout TriangleStream<PsInput> outStream)
 
 		float3 viewDirection = ((pA + pB + pC) / 3).xyz;
 		viewDirection = -normalize(viewDirection);
-		faceNormal = normalize(cross((pB - pA).xyz, (pC - pA).xyz));
+		float3 faceNormal = normalize(cross((pB - pA).xyz, (pC - pA).xyz));
 		dotView = dot(faceNormal, viewDirection);
 
 		if (dotView <= 0) {
-			float4 pos = inputs[i].pos;
-			pos.x -= thickness / 2;
-			pos.y -= thickness / 2;
-			CreateVertex(outStream, pos, true);
+			for (int v = 0; v < 2; v++) {
+				float4 pos = pA + v * float4(faceNormal, 0) * thickness;
+				pos.z -= zbias;
+				CreateVertex(outStream, pos, true);
+			}
 
-			pos = inputs[nextI].pos;
-			pos.x -= thickness / 2;
-			pos.y += thickness / 2;
-			CreateVertex(outStream, pos, true);
-
-			pos.x += thickness;
-			pos.y -= thickness;
-			CreateVertex(outStream, pos, true);
-
-			pos = inputs[i].pos;
-			pos.x += thickness / 2;
-			//CreateVertex(outStream, pos, true);
+			for (int v = 0; v < 2; v++) {
+				float4 pos = pC + v * float4(faceNormal, 0) * thickness;
+				pos.z -= zbias;
+				CreateVertex(outStream, pos, true);
+			}
 
 			outStream.RestartStrip();
 		}
