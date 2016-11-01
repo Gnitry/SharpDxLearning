@@ -19,12 +19,15 @@ PsInput Vs(VsInput input)
     return res;
 }
 
-[maxvertexcount(3)]
-void Gs(triangle PsInput input[3], inout TriangleStream<PsInput> outStream)
+[maxvertexcount(6)]
+void Gs(triangleadj PsInput input[6], inout TriangleStream<PsInput> outStream)
 {
 	outStream.Append(input[0]);
-	outStream.Append(input[1]);
+	//outStream.Append(input[1]);
 	outStream.Append(input[2]);
+	//outStream.Append(input[3]);
+	outStream.Append(input[4]);
+	//outStream.Append(input[5]);
 }
 
 float4 Ps(PsInput input) : SV_TARGET

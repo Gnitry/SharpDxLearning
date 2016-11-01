@@ -18,7 +18,7 @@ namespace ObjLoader.Building
         [StructLayout(LayoutKind.Sequential)]
         private struct VsInput
         {
-            Vector3 Pos;
+            public Vector3 Pos;
 
             public VsInput(Vector3 pos)
             {
@@ -45,23 +45,84 @@ namespace ObjLoader.Building
         public Building(string pathToFile)
         {
             var obj = FileFormatObj.Load(pathToFile, false);
+
+            // Get vertices.
             _vertices = obj.Model.Vertices.Select(v =>
             {
                 var pos = new Vector3(v.x / 5, v.y / 5, (float)(v.z / 5 + 0.5));
                 return new VsInput(pos);
             }).ToArray();
 
-            var indexes = new List<uint>();
+            // Get triangles indexes.
+            var triangles = new List<uint>();
             foreach (var face in obj.Model.UngroupedFaces)
             {
                 for (var i = 1; i < face.Indices.Count - 1; i++)
                 {
-                    indexes.Add((uint)face.Indices[0].vertex);
-                    indexes.Add((uint)face.Indices[i].vertex);
-                    indexes.Add((uint)face.Indices[i + 1].vertex);
+                    triangles.Add((uint)face.Indices[0].vertex);
+                    triangles.Add((uint)face.Indices[i].vertex);
+                    triangles.Add((uint)face.Indices[i + 1].vertex);
                 }
             }
-            _facesIndexes = indexes.ToArray();
+
+            // Get edges.
+            var edges = new Dictionary<Tuple<uint, uint>, uint[]>();
+            uint[] foundIndexes;
+            for (int i = 0; i < triangles.Count; i += 3)
+            {
+                var sides = new[]
+                {
+                    new[] { triangles[i + 0], triangles[i + 1] }.OrderBy(u => u).Concat(new [] {triangles[i+2]}).ToArray(),
+                    new[] { triangles[i + 1], triangles[i + 2] }.OrderBy(u => u).Concat(new [] {triangles[i+0]}).ToArray(),
+                    new[] { triangles[i + 2], triangles[i + 0] }.OrderBy(u => u).Concat(new [] {triangles[i+1]}).ToArray(),
+                };
+
+                foreach (var side in sides)
+                {
+                    var tuple = new Tuple<uint, uint>(side[0], side[1]);
+
+                    if (edges.TryGetValue(tuple, out foundIndexes))
+                    {
+                        foundIndexes[1] = side[2];
+                    }
+                    else
+                    {
+                        foundIndexes = new[] { side[2], uint.MaxValue };
+                    }
+                    edges[tuple] = foundIndexes;
+                }
+            }
+
+            // Fill adjacency.
+            var trianglesWAdj = new List<uint>(triangles.Count * 3);
+            for (int i = 0; i < triangles.Count; i += 3)
+            {
+                var sides = new[]
+                {
+                    new[] { triangles[i + 0], triangles[i + 1] }.OrderBy(u => u).Concat(new [] {triangles[i+2]}).Concat(new [] {triangles[i+0]}).ToArray(),
+                    new[] { triangles[i + 1], triangles[i + 2] }.OrderBy(u => u).Concat(new [] {triangles[i+0]}).Concat(new [] {triangles[i+1]}).ToArray(),
+                    new[] { triangles[i + 2], triangles[i + 0] }.OrderBy(u => u).Concat(new [] {triangles[i+1]}).Concat(new [] {triangles[i+2]}).ToArray(),
+                };
+
+                foreach (var side in sides)
+                {
+                    // Add real point.
+                    trianglesWAdj.Add(side[3]);
+
+                    // Add adjacent point.
+                    if (!edges.TryGetValue(new Tuple<uint, uint>(side[0], side[1]), out foundIndexes))
+                    {
+                        trianglesWAdj.Add(uint.MaxValue);
+                    }
+                    else
+                    {
+                        foundIndexes = foundIndexes.Except(new[] { side[2] }).ToArray();
+                        trianglesWAdj.Add(foundIndexes.First());
+                    }
+                }
+            }
+
+            _facesIndexes = trianglesWAdj.ToArray();
         }
 
         public void InitDraw(DrawManager drawMan)
@@ -135,7 +196,7 @@ namespace ObjLoader.Building
             drawMan.Context.VertexShader.SetConstantBuffer(0, _wvpBuffer);
             drawMan.Context.InputAssembler.SetVertexBuffers(0, _vertexBinding);
             drawMan.Context.InputAssembler.SetIndexBuffer(_indexBuffer, DXGI.Format.R32_UInt, 0);
-            drawMan.Context.InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
+            drawMan.Context.InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleListWithAdjacency;
             drawMan.Context.DrawIndexed(_facesIndexes.Length, 0, 0);
         }
     }
