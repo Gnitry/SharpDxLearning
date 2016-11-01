@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
@@ -33,9 +34,10 @@ namespace ObjLoader
                 //                new Triangle.Triangle(),
                 //                new ObjEntity.ObjEntity(@"ObjEntity\cube.obj"),
                 //                new ObjEntity.ObjEntity(@"Building\tunnel.obj"),
-//                new Building.Building(@"Building\tunnel.obj")
+                //                new Building.Building(@"Building\tunnel.obj")
                 new Building.Building(@"Building\test.obj")
                 );
+            _drawMan.BackColor = Color.FromArgb(0xFF, 0x00, 0x3f, 0x68);
         }
 
         private void Panel_OnLoaded(object sender, RoutedEventArgs e)

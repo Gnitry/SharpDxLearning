@@ -6,12 +6,14 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.Devices.Enumeration;
 using Windows.Graphics.Display;
+using Windows.UI;
 using Windows.UI.Composition;
 using Windows.UI.Xaml.Controls;
 using SharpDX;
 using SharpDX.D3DCompiler;
 using SharpDX.Direct3D;
 using SharpDX.Mathematics.Interop;
+using Color = SharpDX.Color;
 using CompositionTarget = Windows.UI.Xaml.Media.CompositionTarget;
 using D3D = SharpDX.Direct3D11;
 using DXGI = SharpDX.DXGI;
@@ -36,6 +38,26 @@ namespace ObjLoader
         public double Height { get; private set; }
 
         public Stopwatch Time { get; private set; } = new Stopwatch();
+
+        public Color RawBackColor { get; set; }
+
+        public Windows.UI.Color BackColor
+        {
+            get
+            {
+                return new Windows.UI.Color()
+                {
+                    R = RawBackColor.R,
+                    G = RawBackColor.G,
+                    B = RawBackColor.B,
+                    A = RawBackColor.A
+                };
+            }
+            set
+            {
+                RawBackColor = new Color(value.R, value.G, value.B, value.A);
+            }
+        }
 
         public DrawManager(SwapChainPanel panel, params IDrawEntity[] entities)
         {
@@ -199,7 +221,7 @@ namespace ObjLoader
             Context.OutputMerger.SetRenderTargets(DepthView, RenderView);
 
             Context.ClearDepthStencilView(DepthView, D3D.DepthStencilClearFlags.Depth, 1.0f, 0);
-            Context.ClearRenderTargetView(RenderView, new Color(0x2D, 0x45, 0x64, 0xFF));
+            Context.ClearRenderTargetView(RenderView, RawBackColor);
 
             foreach (var drawEntity in _entities)
             {

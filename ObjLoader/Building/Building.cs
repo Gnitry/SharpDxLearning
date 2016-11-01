@@ -8,6 +8,7 @@ using FileFormatWavefront;
 using SharpDX;
 using SharpDX.D3DCompiler;
 using SharpDX.Direct3D;
+using SharpDX.Mathematics.Interop;
 using D3D = SharpDX.Direct3D11;
 using DXGI = SharpDX.DXGI;
 
@@ -26,12 +27,20 @@ namespace ObjLoader.Building
             }
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        private struct ColorsBufferStruct
+        {
+            public Color4 FaceColor;
+            public Color4 OutlineColor;
+        }
+
         private D3D.Buffer _vertexBuffer;
         private D3D.VertexBufferBinding _vertexBinding;
         private D3D.InputLayout _inputLayout;
         private D3D.VertexShader _vertexShader;
         private D3D.PixelShader _pixelShader;
         private D3D.Buffer _indexBuffer;
+        private ColorsBufferStruct _colors;
 
         private readonly VsInput[] _vertices;
 
@@ -41,6 +50,7 @@ namespace ObjLoader.Building
         private Matrix _proj;
         private Matrix _view;
         private D3D.GeometryShader _geometryShader;
+        private D3D.Buffer _colorsBuffer;
 
         public Building(string pathToFile)
         {
@@ -152,6 +162,12 @@ namespace ObjLoader.Building
 
             _wvpBuffer = D3D.Buffer.Create(drawMan.Device, D3D.BindFlags.ConstantBuffer, ref _wvp);
 
+            _colors.FaceColor = drawMan.RawBackColor;
+            _colors.FaceColor.Green = 1.0F;
+            _colors.OutlineColor = Color4.White;
+            _colorsBuffer = D3D.Buffer.Create(drawMan.Device, D3D.BindFlags.ConstantBuffer, ref _colors);
+            drawMan.Context.UpdateSubresource(ref _colors, _colorsBuffer);
+
             _view = SharpDX.Matrix.LookAtLH(new Vector3(0, 0, -5), new Vector3(0, 0, 0), Vector3.UnitY);
             _proj = SharpDX.Matrix.PerspectiveFovLH((float)Math.PI / 4.0f, (float)(drawMan.Width / drawMan.Height), 0.1f, 100.0f);
 
@@ -184,7 +200,7 @@ namespace ObjLoader.Building
 
         public void Render(DrawManager drawMan)
         {
-            // Set wvp.
+            // Set wvp.@
             CalcWvp(drawMan);
             drawMan.Context.UpdateSubresource(ref _wvp, _wvpBuffer);
 
@@ -194,6 +210,7 @@ namespace ObjLoader.Building
             drawMan.Context.GeometryShader.Set(_geometryShader);
             drawMan.Context.PixelShader.Set(_pixelShader);
             drawMan.Context.VertexShader.SetConstantBuffer(0, _wvpBuffer);
+            drawMan.Context.GeometryShader.SetConstantBuffer(0, _colorsBuffer);
             drawMan.Context.InputAssembler.SetVertexBuffers(0, _vertexBinding);
             drawMan.Context.InputAssembler.SetIndexBuffer(_indexBuffer, DXGI.Format.R32_UInt, 0);
             drawMan.Context.InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleListWithAdjacency;
