@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using FileFormatWavefront;
@@ -14,6 +15,17 @@ namespace ObjLoader.Building
 {
     public class Building : IDrawEntity
     {
+        [StructLayout(LayoutKind.Sequential)]
+        private struct VsInput
+        {
+            Vector3 Pos;
+
+            public VsInput(Vector3 pos)
+            {
+                Pos = pos;
+            }
+        }
+
         private D3D.Buffer _vertexBuffer;
         private D3D.VertexBufferBinding _vertexBinding;
         private D3D.InputLayout _inputLayout;
@@ -21,18 +33,23 @@ namespace ObjLoader.Building
         private D3D.PixelShader _pixelShader;
         private D3D.Buffer _indexBuffer;
 
-        private readonly Vector3[] _vertices;
+        private readonly VsInput[] _vertices;
 
         private readonly uint[] _facesIndexes;
         private D3D.Buffer _wvpBuffer;
         private Matrix _wvp;
         private Matrix _proj;
         private Matrix _view;
+        private D3D.GeometryShader _geometryShader;
 
         public Building(string pathToFile)
         {
             var obj = FileFormatObj.Load(pathToFile, false);
-            _vertices = obj.Model.Vertices.Select(v => new Vector3(v.x / 5, v.y / 5, (float)(v.z / 5 + 0.5))).ToArray();
+            _vertices = obj.Model.Vertices.Select(v =>
+            {
+                var pos = new Vector3(v.x / 5, v.y / 5, (float)(v.z / 5 + 0.5));
+                return new VsInput(pos);
+            }).ToArray();
 
             var indexes = new List<uint>();
             foreach (var face in obj.Model.UngroupedFaces)
@@ -49,22 +66,27 @@ namespace ObjLoader.Building
 
         public void InitDraw(DrawManager drawMan)
         {
-            _vertexBuffer = D3D.Buffer.Create<Vector3>(drawMan.Device, D3D.BindFlags.VertexBuffer, _vertices);
-            _vertexBinding = new D3D.VertexBufferBinding(_vertexBuffer, Utilities.SizeOf<Vector3>(), 0);
+            _vertexBuffer = D3D.Buffer.Create<VsInput>(drawMan.Device, D3D.BindFlags.VertexBuffer, _vertices);
+            _vertexBinding = new D3D.VertexBufferBinding(_vertexBuffer, Utilities.SizeOf<VsInput>(), 0);
             _indexBuffer = D3D.Buffer.Create<uint>(drawMan.Device, D3D.BindFlags.IndexBuffer, _facesIndexes);
 
-            using (var byteCode = ShaderBytecode.CompileFromFile(@"Building\building.fx", "vs", "vs_4_0", ShaderFlags.Debug))
+            using (var bytecode = ShaderBytecode.CompileFromFile(@"Building\building.fx", "Vs", "vs_4_0", ShaderFlags.Debug))
             {
-                _vertexShader = new D3D.VertexShader(drawMan.Device, byteCode);
-                _inputLayout = new D3D.InputLayout(drawMan.Device, byteCode, new D3D.InputElement[]
+                _vertexShader = new D3D.VertexShader(drawMan.Device, bytecode);
+                _inputLayout = new D3D.InputLayout(drawMan.Device, bytecode, new[]
                 {
                     new D3D.InputElement("POSITION", 0, DXGI.Format.R32G32B32_Float, 0, 0),
                 });
             }
 
-            using (var byteCode = ShaderBytecode.CompileFromFile(@"Building\building.fx", "ps", "ps_4_0", ShaderFlags.Debug))
+            using (var bytecode = ShaderBytecode.CompileFromFile(@"Building\building.fx", "Ps", "ps_4_0", ShaderFlags.Debug))
             {
-                _pixelShader = new D3D.PixelShader(drawMan.Device, byteCode);
+                _pixelShader = new D3D.PixelShader(drawMan.Device, bytecode);
+            }
+
+            using (var bytecode = ShaderBytecode.CompileFromFile(@"Building\building.fx", "Gs", "gs_4_0", ShaderFlags.Debug))
+            {
+                _geometryShader = new D3D.GeometryShader(drawMan.Device, bytecode);
             }
 
             _wvpBuffer = D3D.Buffer.Create(drawMan.Device, D3D.BindFlags.ConstantBuffer, ref _wvp);
@@ -94,6 +116,7 @@ namespace ObjLoader.Building
             _vertexBuffer.Dispose();
             _indexBuffer.Dispose();
             _pixelShader.Dispose();
+            _geometryShader.Dispose();
             _vertexShader.Dispose();
             _inputLayout.Dispose();
         }
@@ -107,16 +130,13 @@ namespace ObjLoader.Building
             // Draw front faces.
             drawMan.Context.InputAssembler.InputLayout = _inputLayout;
             drawMan.Context.VertexShader.Set(_vertexShader);
+            drawMan.Context.GeometryShader.Set(_geometryShader);
             drawMan.Context.PixelShader.Set(_pixelShader);
             drawMan.Context.VertexShader.SetConstantBuffer(0, _wvpBuffer);
             drawMan.Context.InputAssembler.SetVertexBuffers(0, _vertexBinding);
             drawMan.Context.InputAssembler.SetIndexBuffer(_indexBuffer, DXGI.Format.R32_UInt, 0);
             drawMan.Context.InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
             drawMan.Context.DrawIndexed(_facesIndexes.Length, 0, 0);
-
-            // Draw edges.
-            drawMan.Context.InputAssembler.PrimitiveTopology = PrimitiveTopology.LineStrip;
-            drawMan.Context.DrawIndexed();
         }
     }
 }

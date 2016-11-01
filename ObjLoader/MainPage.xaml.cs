@@ -33,7 +33,8 @@ namespace ObjLoader
                 //                new Triangle.Triangle(),
                 //                new ObjEntity.ObjEntity(@"ObjEntity\cube.obj"),
                 //                new ObjEntity.ObjEntity(@"Building\tunnel.obj"),
-                new Building.Building(@"Building\tunnel.obj")
+//                new Building.Building(@"Building\tunnel.obj")
+                new Building.Building(@"Building\test.obj")
                 );
         }
 
