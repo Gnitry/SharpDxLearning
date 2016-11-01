@@ -59,7 +59,7 @@ namespace ObjLoader.Building
             // Get vertices.
             _vertices = obj.Model.Vertices.Select(v =>
             {
-                var pos = new Vector3(v.x / 5, v.y / 5, (float)(v.z / 5 + 0.5));
+                var pos = new Vector3(v.x, v.y, v.z);
                 return new VsInput(pos);
             }).ToArray();
 
@@ -141,7 +141,7 @@ namespace ObjLoader.Building
             _vertexBinding = new D3D.VertexBufferBinding(_vertexBuffer, Utilities.SizeOf<VsInput>(), 0);
             _indexBuffer = D3D.Buffer.Create<uint>(drawMan.Device, D3D.BindFlags.IndexBuffer, _facesIndexes);
 
-            using (var bytecode = ShaderBytecode.CompileFromFile(@"Building\building.fx", "Vs", "vs_4_0", ShaderFlags.Debug))
+            using (var bytecode = ShaderBytecode.CompileFromFile(@"Building\building.fx", "Vs", "vs_4_0", ShaderFlags.Debug | ShaderFlags.SkipOptimization))
             {
                 _vertexShader = new D3D.VertexShader(drawMan.Device, bytecode);
                 _inputLayout = new D3D.InputLayout(drawMan.Device, bytecode, new[]
@@ -150,12 +150,12 @@ namespace ObjLoader.Building
                 });
             }
 
-            using (var bytecode = ShaderBytecode.CompileFromFile(@"Building\building.fx", "Ps", "ps_4_0", ShaderFlags.Debug))
+            using (var bytecode = ShaderBytecode.CompileFromFile(@"Building\building.fx", "Ps", "ps_4_0", ShaderFlags.Debug | ShaderFlags.SkipOptimization))
             {
                 _pixelShader = new D3D.PixelShader(drawMan.Device, bytecode);
             }
 
-            using (var bytecode = ShaderBytecode.CompileFromFile(@"Building\building.fx", "Gs", "gs_4_0", ShaderFlags.Debug))
+            using (var bytecode = ShaderBytecode.CompileFromFile(@"Building\building.fx", "Gs", "gs_4_0", ShaderFlags.Debug | ShaderFlags.SkipOptimization))
             {
                 _geometryShader = new D3D.GeometryShader(drawMan.Device, bytecode);
             }
@@ -201,7 +201,7 @@ namespace ObjLoader.Building
         public void Render(DrawManager drawMan)
         {
             // Set wvp.@
-            CalcWvp(drawMan);
+//            CalcWvp(drawMan);
             drawMan.Context.UpdateSubresource(ref _wvp, _wvpBuffer);
 
             // Draw front faces.
