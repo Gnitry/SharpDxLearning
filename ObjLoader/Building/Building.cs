@@ -104,7 +104,7 @@ namespace ObjLoader.Building
             }
 
             // Fill adjacency.
-            var trianglesWAdj = new List<uint>(triangles.Count * 3);
+            var trianglesWAdj = new List<uint>(triangles.Count * 2);
             for (int i = 0; i < triangles.Count; i += 3)
             {
                 var sides = new[]
@@ -130,6 +130,13 @@ namespace ObjLoader.Building
                         trianglesWAdj.Add(foundIndexes.First());
                     }
                 }
+            }
+
+            for (int i = 0; i < trianglesWAdj.Count; i += 6)
+            {
+                if (trianglesWAdj[i + 1] == uint.MaxValue) trianglesWAdj[i + 1] = trianglesWAdj[i + 0];
+                if (trianglesWAdj[i + 3] == uint.MaxValue) trianglesWAdj[i + 3] = trianglesWAdj[i + 2];
+                if (trianglesWAdj[i + 5] == uint.MaxValue) trianglesWAdj[i + 5] = trianglesWAdj[i + 4];
             }
 
             _facesIndexes = trianglesWAdj.ToArray();
@@ -163,23 +170,26 @@ namespace ObjLoader.Building
             _wvpBuffer = D3D.Buffer.Create(drawMan.Device, D3D.BindFlags.ConstantBuffer, ref _wvp);
 
             _colors.FaceColor = drawMan.RawBackColor;
-            _colors.FaceColor.Green = 1.0F;
+            _colors.FaceColor.Green = 1.0f;
+            _colors.FaceColor.Alpha = 1.0f;
             _colors.OutlineColor = Color4.White;
             _colorsBuffer = D3D.Buffer.Create(drawMan.Device, D3D.BindFlags.ConstantBuffer, ref _colors);
             drawMan.Context.UpdateSubresource(ref _colors, _colorsBuffer);
 
-            _view = SharpDX.Matrix.LookAtLH(new Vector3(0, 0, -5), new Vector3(0, 0, 0), Vector3.UnitY);
-            _proj = SharpDX.Matrix.PerspectiveFovLH((float)Math.PI / 4.0f, (float)(drawMan.Width / drawMan.Height), 0.1f, 100.0f);
+            _view = Matrix.LookAtLH(new Vector3(0, 0, -5), new Vector3(0, 0, 0), Vector3.UnitY);
+            _proj = Matrix.PerspectiveFovLH((float)Math.PI / 4.0f, (float)(drawMan.Width / drawMan.Height), 0.1f, 100.0f);
 
             CalcWvp(drawMan);
         }
 
         private void CalcWvp(DrawManager drawMan)
         {
-            var periodX = 8000.0;
-            var periodY = 16000.0;
-            var periodZ = 32000.0;
-            _wvp = Matrix.RotationY((float)(2 * Math.PI * (drawMan.Time.ElapsedMilliseconds % periodX) / periodX))
+            float k = 10;
+            var periodX = 8000.0 * k;
+            var periodY = 16000.0 * k;
+            var periodZ = 32000.0 * k;
+            _wvp = 
+                Matrix.RotationY((float)(2 * Math.PI * (drawMan.Time.ElapsedMilliseconds % periodX) / periodX))
                 * Matrix.RotationX((float)(2 * Math.PI * (drawMan.Time.ElapsedMilliseconds % periodY) / periodY))
                 * Matrix.RotationZ((float)(2 * Math.PI * (drawMan.Time.ElapsedMilliseconds % periodZ) / periodZ))
                 * _view
@@ -200,8 +210,8 @@ namespace ObjLoader.Building
 
         public void Render(DrawManager drawMan)
         {
-            // Set wvp.@
-//            CalcWvp(drawMan);
+            // Set wvp.
+            CalcWvp(drawMan);
             drawMan.Context.UpdateSubresource(ref _wvp, _wvpBuffer);
 
             // Draw front faces.
