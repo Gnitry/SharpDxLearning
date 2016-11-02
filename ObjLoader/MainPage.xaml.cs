@@ -13,6 +13,7 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
+using ObjLoader.Building;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -34,8 +35,8 @@ namespace ObjLoader
                 //                new Triangle.Triangle(),
                 //                new ObjEntity.ObjEntity(@"ObjEntity\cube.obj"),
                 //                new ObjEntity.ObjEntity(@"Tunnel\tunnel.obj"),
-                //                new Tunnel.Tunnel(@"Tunnel\tunnel.obj")
-                new Building.Tunnel(@"Tunnel\test.obj")
+                                new Tunnel(@"Tunnel\tunnel.obj")
+//                new Tunnel(@"Tunnel\test.obj")
                 );
             _drawMan.BackColor = Color.FromArgb(0xFF, 0x00, 0x3f, 0x68);
         }

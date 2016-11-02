@@ -125,3 +125,14 @@ float4 Ps(PsInput input) : SV_TARGET
 {
 	return input.col;
 }
+
+
+//technique10 Render
+//{
+//	pass P0
+//	{
+//		SetGeometryShader(CompileShader(gs_4_0, Gs()));
+//		SetVertexShader(CompileShader(vs_4_0, Vs()));
+//		SetPixelShader(CompileShader(ps_4_0, Ps()));
+//	}
+//}

@@ -59,7 +59,7 @@ namespace ObjLoader.Building
             // Get vertices.
             _vertices = obj.Model.Vertices.Select(v =>
             {
-                var scale = 1f;
+                var scale = 10f;
                 var pos = new Vector4(v.x / scale, v.y / scale, v.z / scale, 1.0f);
                 return new VsInput(pos);
             }).ToArray();
@@ -179,11 +179,16 @@ namespace ObjLoader.Building
                 _geometryShader = new D3D.GeometryShader(drawMan.Device, bytecode);
             }
 
+//            using (var effectByteCode = ShaderBytecode.CompileFromFile(@"Tunnel\outlined.fx", "fx_5_0", ShaderFlags.None, EffectFlags.None))
+//            {
+//                var _effect = new D3D.Effect(drawMan.Device, effectByteCode);
+//            }
+
             _wvpBuffer = D3D.Buffer.Create(drawMan.Device, D3D.BindFlags.ConstantBuffer, ref _wvp);
 
             _colors.FaceColor = drawMan.RawBackColor;
-//            _colors.FaceColor.Green = 1.0f;
-//            _colors.FaceColor.Alpha = 1.0f;
+            //            _colors.FaceColor.Green = 1.0f;
+            //            _colors.FaceColor.Alpha = 1.0f;
             _colors.OutlineColor = Color4.White;
             _colorsBuffer = D3D.Buffer.Create(drawMan.Device, D3D.BindFlags.ConstantBuffer, ref _colors);
             drawMan.Context.UpdateSubresource(ref _colors, _colorsBuffer);
