@@ -54,12 +54,13 @@ namespace FileFormatWavefront
             var interimFaces = new List<InterimFace>();
             var materials = new List<Material>();
             var groups = new List<Group>();
-            string objectName = null;
+            var meshObjects = new List<MeshObject>();
 
             //  State changing data is loaded as we go through the file - once loaded, state changing
             //  data applies to all subsequent elements until it is explicitly changed by introducing
             //  new state changing data.
             Group currentGroup = null;
+            MeshObject currentMeshObject = null;
             string currentMaterialName = null;
 
             //  Read line by line.
@@ -89,10 +90,10 @@ namespace FileFormatWavefront
 
                         //  Add the UV.
                         uvs.Add(new UV
-                                {
-                                    u = float.Parse(dataStrings[0]),
-                                    v = float.Parse(dataStrings[1])
-                                });
+                        {
+                            u = float.Parse(dataStrings[0]),
+                            v = float.Parse(dataStrings[1])
+                        });
                     }
                     catch (Exception exception)
                     {
@@ -107,11 +108,11 @@ namespace FileFormatWavefront
                         //  Split the line data into normal coordinates.
                         var dataStrings = lineData.Split(dataSeparators, StringSplitOptions.RemoveEmptyEntries);
                         normals.Add(new Vertex
-                                {
-                                    x = float.Parse(dataStrings[0]),
-                                    y = float.Parse(dataStrings[1]),
-                                    z = float.Parse(dataStrings[2])
-                                });
+                        {
+                            x = float.Parse(dataStrings[0]),
+                            y = float.Parse(dataStrings[1]),
+                            z = float.Parse(dataStrings[2])
+                        });
                     }
                     catch (Exception exception)
                     {
@@ -126,11 +127,11 @@ namespace FileFormatWavefront
                         //  Split the line data into vertex coordinates.
                         var dataStrings = lineData.Split(dataSeparators, StringSplitOptions.RemoveEmptyEntries);
                         vertices.Add(new Vertex
-                                {
-                                    x = float.Parse(dataStrings[0]),
-                                    y = float.Parse(dataStrings[1]),
-                                    z = float.Parse(dataStrings[2])
-                                });
+                        {
+                            x = float.Parse(dataStrings[0]),
+                            y = float.Parse(dataStrings[1]),
+                            z = float.Parse(dataStrings[2])
+                        });
                     }
                     catch (Exception exception)
                     {
@@ -154,18 +155,19 @@ namespace FileFormatWavefront
                             var uv = (parts.Length > 1 && parts[1].Length > 0) ? (int?)MapIndex(uvs.Count, int.Parse(parts[1])) : null;
                             var normal = (parts.Length > 2 && parts[2].Length > 0) ? (int?)MapIndex(normals.Count, int.Parse(parts[2])) : null;
                             indices.Add(new Index
-                                        {
-                                            vertex = vertex,
-                                            uv = uv,
-                                            normal = normal
-                                        });
+                            {
+                                vertex = vertex,
+                                uv = uv,
+                                normal = normal
+                            });
                         }
                         interimFaces.Add(new InterimFace
-                                         {
-                                             materialName = currentMaterialName,
-                                             indices = indices,
-                                             group = currentGroup
-                                         });
+                        {
+                            materialName = currentMaterialName,
+                            indices = indices,
+                            group = currentGroup,
+                            meshObject = currentMeshObject
+                        });
                     }
                     catch (Exception exception)
                     {
@@ -200,17 +202,17 @@ namespace FileFormatWavefront
                     //  The material name is simply the line data.
                     currentMaterialName = lineData;
                 }
-                else if(lineType.IsLineType(LineTypeGroup))
+                else if (lineType.IsLineType(LineTypeGroup))
                 {
                     //  Create a new group.
                     var groupNames = lineData.Split(dataSeparators, StringSplitOptions.RemoveEmptyEntries);
                     currentGroup = new Group(groupNames);
                     groups.Add(currentGroup);
                 }
-                else if(lineType.IsLineType(LineTypeSmoothingGroup))
+                else if (lineType.IsLineType(LineTypeSmoothingGroup))
                 {
                     //  If we have no current group, we cannot set a smoothing group.
-                    if(currentGroup == null)
+                    if (currentGroup == null)
                     {
                         messages.Add(new Message(MessageType.Warning, path, lineNumberCounter,
                             string.Format("Cannot set smoothing group '{0}' as the current context has no group.", lineData)));
@@ -219,20 +221,15 @@ namespace FileFormatWavefront
                     {
                         //  The smoothing group is an int, if we can get it.
                         int smoothingGroup;
-                        if(int.TryParse(lineData, out smoothingGroup))
+                        if (int.TryParse(lineData, out smoothingGroup))
                             currentGroup.SetSmoothingGroup(smoothingGroup);
                         currentGroup.SetSmoothingGroup(null);
                     }
                 }
-                else if(lineType.IsLineType(LineTypeObjectName))
+                else if (lineType.IsLineType(LineTypeObjectName))
                 {
-                    //  Set the object name, warning if it's already set.
-                    if (objectName != null)
-                    {
-                        messages.Add(new Message(MessageType.Warning, path, lineNumberCounter,
-                            string.Format("An object name statement to set the name to '{0}' will overwrite the current object name '{1}'.", lineData, objectName)));
-                    }
-                    objectName = lineData;
+                    currentMeshObject = new MeshObject(lineData);
+                    meshObjects.Add(currentMeshObject);
                 }
                 else
                 {
@@ -258,9 +255,11 @@ namespace FileFormatWavefront
                     interimFace.group.AddFace(face);
                 else
                     ungroupedFaces.Add(face);
+
+                interimFace?.meshObject?.AddFace(face);
             }
 
-            return new FileLoadResult<Scene>(new Scene(vertices, uvs, normals, ungroupedFaces, groups, materials, objectName), messages);
+            return new FileLoadResult<Scene>(new Scene(vertices, uvs, normals, ungroupedFaces, groups, materials, meshObjects), messages);
         }
 
         /// <summary>
@@ -294,6 +293,7 @@ namespace FileFormatWavefront
         internal class InterimFace
         {
             public Group group;
+            public MeshObject meshObject;
             public string materialName;
             public List<Index> indices;
             public bool smoothShading;

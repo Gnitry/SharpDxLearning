@@ -33,9 +33,9 @@ namespace ObjLoader
                 //                new SolidEntity.SolidEntity(),
                 //                new Triangle.Triangle(),
                 //                new ObjEntity.ObjEntity(@"ObjEntity\cube.obj"),
-                //                new ObjEntity.ObjEntity(@"Building\tunnel.obj"),
-                //                new Building.Building(@"Building\tunnel.obj")
-                new Building.Building(@"Building\test.obj")
+                //                new ObjEntity.ObjEntity(@"Tunnel\tunnel.obj"),
+                //                new Tunnel.Tunnel(@"Tunnel\tunnel.obj")
+                new Building.Tunnel(@"Tunnel\test.obj")
                 );
             _drawMan.BackColor = Color.FromArgb(0xFF, 0x00, 0x3f, 0x68);
         }

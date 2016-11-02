@@ -39,11 +39,10 @@ void CreateVertex(inout TriangleStream<PsInput> outStream, float4 pos, bool isOu
 	triang.pos = pos;
 
 	if (isOutline) {
-		triang.col = float4(1, 1, 1, 1.0);
+		triang.col = outlineColor;
 	}
 	else
 	{
-		//triang.pos.x += 1.5;
 		triang.col = faceColor;
 	}
 
@@ -53,8 +52,9 @@ void CreateVertex(inout TriangleStream<PsInput> outStream, float4 pos, bool isOu
 [maxvertexcount(15)]
 void Gs(triangleadj GsInput inputs[6], inout TriangleStream<PsInput> outStream)
 {
-	float thickness = 0.05;
-	float zbias = 0.000;
+	float thickness = 0.02;
+	float overrun = 0.5 * thickness;
+	float zBias = 0.000;
 
 	CreateVertex(outStream, inputs[0].pos, false);
 	CreateVertex(outStream, inputs[2].pos, false);
@@ -66,17 +66,19 @@ void Gs(triangleadj GsInput inputs[6], inout TriangleStream<PsInput> outStream)
 	float4 pC = inputs[4].pos;
 	float3 viewDirection = ((pA + pB + pC) / 3).xyz;
 	viewDirection = -normalize(viewDirection);
-	float3 origFaceNormal = normalize(cross((pB-pA).xyz, (pC-pA).xyz));
+	float3 origFaceNormal = normalize(cross((pB - pA).xyz, (pC - pA).xyz));
 	float dotView = dot(origFaceNormal, viewDirection);
 	bool isFrontFace = dotView > 0;
-	
+
 	if (!isFrontFace) return;
-	
+
 	for (uint i = 0; i < 6; i += 2) {
 		uint nextI = (i + 2) % 6;
+		uint prevI = (i + 4) % 6;
 		pA = inputs[i].pos;
 		pB = inputs[i + 1].pos;
 		pC = inputs[nextI].pos;
+		float4 pPrev = inputs[prevI].pos;
 
 		bool drawOutline = false;
 
@@ -91,20 +93,28 @@ void Gs(triangleadj GsInput inputs[6], inout TriangleStream<PsInput> outStream)
 		}
 
 		if (drawOutline) {
-			float3 diff = pC - pA;
-			float3 outlineDir = -normalize(cross((diff).xyz, pA.xyz));
+			float4 nCA = normalize(pA - pC);
+			float3 outlineDir = normalize(cross(nCA.xyz, pA.xyz));
 
-			for (int v = 0; v < 2; v++) {
-				float4 pos = pA + v * float4(outlineDir, 0) * thickness;
-				pos.z -= zbias;
-				CreateVertex(outStream, pos, true);
-			}
+			// Point A1.
+			float4 pos = pA + nCA * overrun;
+			pos.z -= zBias;
+			CreateVertex(outStream, pos, true);
 
-			for (int v = 0; v < 2; v++) {
-				float4 pos = pC + v * float4(outlineDir, 0) * thickness;
-				pos.z -= zbias;
-				CreateVertex(outStream, pos, true);
-			}
+			// Point A2.
+			pos += float4(outlineDir, 0) * thickness;
+			pos.z -= zBias;
+			CreateVertex(outStream, pos, true);
+
+			// Point C1.
+			pos = pC + -nCA * overrun;
+			pos.z -= zBias;
+			CreateVertex(outStream, pos, true);
+
+			// Point C2.
+			pos += float4(outlineDir, 0) * thickness;
+			pos.z -= zBias;
+			CreateVertex(outStream, pos, true);
 
 			outStream.RestartStrip();
 		}
