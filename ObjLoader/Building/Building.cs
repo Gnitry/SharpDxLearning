@@ -188,15 +188,14 @@ namespace ObjLoader.Building
 
         private void CalcWvp(DrawManager drawMan)
         {
-            float k = 6;
+            float k = 2;
             var periodX = 8000.0 * k;
             var periodY = 16000.0 * k;
             var periodZ = 32000.0 * k;
             _wvp =
                 Matrix.RotationY((float)(2 * Math.PI * (drawMan.Time.ElapsedMilliseconds % periodY) / periodY))
-//                * Matrix.RotationX((float) (0.3 * Math.PI))
-//                Matrix.RotationX((float)(2 * Math.PI * (drawMan.Time.ElapsedMilliseconds % periodX) / periodX))
-//                * Matrix.RotationZ((float)(2 * Math.PI * (drawMan.Time.ElapsedMilliseconds % periodZ) / periodZ))
+                * Matrix.RotationX((float)(2 * Math.PI * (drawMan.Time.ElapsedMilliseconds % periodX) / periodX))
+                * Matrix.RotationZ((float)(2 * Math.PI * (drawMan.Time.ElapsedMilliseconds % periodZ) / periodZ))
                 * _view
                 * _proj;
             _wvp.Transpose();

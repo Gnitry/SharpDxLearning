@@ -50,11 +50,11 @@ void CreateVertex(inout TriangleStream<PsInput> outStream, float4 pos, bool isOu
 	outStream.Append(triang);
 }
 
-[maxvertexcount(12)]
+[maxvertexcount(15)]
 void Gs(triangleadj GsInput inputs[6], inout TriangleStream<PsInput> outStream)
 {
-	float thickness = 0.3;
-	float zbias = 0.001;
+	float thickness = 0.05;
+	float zbias = 0.000;
 
 	CreateVertex(outStream, inputs[0].pos, false);
 	CreateVertex(outStream, inputs[2].pos, false);
@@ -81,9 +81,8 @@ void Gs(triangleadj GsInput inputs[6], inout TriangleStream<PsInput> outStream)
 		bool drawOutline = false;
 
 		if ((pA.x == pB.x) && (pA.y == pB.y) && (pA.z == pB.z) && (pA.w == pB.w)) drawOutline = true;
-		if (!drawOutline && (pC.x == pB.x) && (pC.y == pB.y) && (pC.z == pB.z) && (pC.w == pB.w)) drawOutline = true;
-
-		if (!drawOutline) {
+		else if (!drawOutline && (pC.x == pB.x) && (pC.y == pB.y) && (pC.z == pB.z) && (pC.w == pB.w)) drawOutline = true;
+		else {
 			float3 viewDirection = ((pA + pB + pC) / 3).xyz;
 			viewDirection = -normalize(viewDirection);
 			float3 faceNormal = normalize(cross((pB - pA).xyz, (pC - pA).xyz));
@@ -92,14 +91,17 @@ void Gs(triangleadj GsInput inputs[6], inout TriangleStream<PsInput> outStream)
 		}
 
 		if (drawOutline) {
+			float3 diff = pC - pA;
+			float3 outlineDir = -normalize(cross((diff).xyz, pA.xyz));
+
 			for (int v = 0; v < 2; v++) {
-				float4 pos = pA + v * float4(origFaceNormal, 0) * thickness;
+				float4 pos = pA + v * float4(outlineDir, 0) * thickness;
 				pos.z -= zbias;
 				CreateVertex(outStream, pos, true);
 			}
 
 			for (int v = 0; v < 2; v++) {
-				float4 pos = pC + v * float4(origFaceNormal, 0) * thickness;
+				float4 pos = pC + v * float4(outlineDir, 0) * thickness;
 				pos.z -= zbias;
 				CreateVertex(outStream, pos, true);
 			}

@@ -159,7 +159,7 @@ namespace ObjLoader
             // Initialize rasterizer.
             var rasterStateDesc = new D3D.RasterizerStateDescription2()
             {
-                CullMode = D3D.CullMode.None,
+                CullMode = D3D.CullMode. None,
                 DepthBias = 0,
                 DepthBiasClamp = 0,
                 FillMode = D3D.FillMode.Solid,
