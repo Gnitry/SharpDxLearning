@@ -43,7 +43,7 @@ void CreateVertex(inout TriangleStream<PsInput> outStream, float4 pos, bool isOu
 	}
 	else
 	{
-		triang.pos.x += 1.5;
+		//triang.pos.x += 1.5;
 		triang.col = faceColor;
 	}
 
@@ -53,7 +53,7 @@ void CreateVertex(inout TriangleStream<PsInput> outStream, float4 pos, bool isOu
 [maxvertexcount(12)]
 void Gs(triangleadj GsInput inputs[6], inout TriangleStream<PsInput> outStream)
 {
-	float thickness = 0.1;
+	float thickness = 0.3;
 	float zbias = 0.001;
 
 	CreateVertex(outStream, inputs[0].pos, false);
@@ -71,12 +71,15 @@ void Gs(triangleadj GsInput inputs[6], inout TriangleStream<PsInput> outStream)
 	bool isFrontFace = dotView > 0;
 	
 	if (!isFrontFace) return;
-
+	
 	for (uint i = 0; i < 6; i += 2) {
 		uint nextI = (i + 2) % 6;
 		pA = inputs[i].pos;
 		pB = inputs[i + 1].pos;
 		pC = inputs[nextI].pos;
+
+		if ((pA.x == pB.x) && (pA.y == pB.y) && (pA.z == pB.z) && (pA.w == pB.w)) continue;
+		if ((pC.x == pB.x) && (pC.y == pB.y) && (pC.z == pB.z) && (pC.w == pB.w)) continue;
 
 		float3 viewDirection = ((pA + pB + pC) / 3).xyz;
 		viewDirection = -normalize(viewDirection);
@@ -85,13 +88,13 @@ void Gs(triangleadj GsInput inputs[6], inout TriangleStream<PsInput> outStream)
 
 		if (dotView <= 0) {
 			for (int v = 0; v < 2; v++) {
-				float4 pos = pA + v * float4(faceNormal, 0) * thickness;
+				float4 pos = pA + v * float4(origFaceNormal, 0) * thickness;
 				pos.z -= zbias;
 				CreateVertex(outStream, pos, true);
 			}
 
 			for (int v = 0; v < 2; v++) {
-				float4 pos = pC + v * float4(faceNormal, 0) * thickness;
+				float4 pos = pC + v * float4(origFaceNormal, 0) * thickness;
 				pos.z -= zbias;
 				CreateVertex(outStream, pos, true);
 			}

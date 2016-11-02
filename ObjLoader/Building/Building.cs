@@ -59,7 +59,8 @@ namespace ObjLoader.Building
             // Get vertices.
             _vertices = obj.Model.Vertices.Select(v =>
             {
-                var pos = new Vector4(v.x / 2f, v.y / 2f, v.z / 2f, 1.0f);
+                var scale = 1f;
+                var pos = new Vector4(v.x / scale, v.y / scale, v.z / scale, 1.0f);
                 return new VsInput(pos);
             }).ToArray();
 
@@ -192,8 +193,9 @@ namespace ObjLoader.Building
             var periodY = 16000.0 * k;
             var periodZ = 32000.0 * k;
             _wvp =
-                Matrix.RotationY((float)(2 * Math.PI * (drawMan.Time.ElapsedMilliseconds % periodX) / periodX))
-//                * Matrix.RotationX((float)(2 * Math.PI * (drawMan.Time.ElapsedMilliseconds % periodY) / periodY))
+                Matrix.RotationY((float)(2 * Math.PI * (drawMan.Time.ElapsedMilliseconds % periodY) / periodY))
+//                * Matrix.RotationX((float) (0.3 * Math.PI))
+//                Matrix.RotationX((float)(2 * Math.PI * (drawMan.Time.ElapsedMilliseconds % periodX) / periodX))
 //                * Matrix.RotationZ((float)(2 * Math.PI * (drawMan.Time.ElapsedMilliseconds % periodZ) / periodZ))
                 * _view
                 * _proj;
