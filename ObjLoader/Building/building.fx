@@ -39,7 +39,7 @@ void CreateVertex(inout TriangleStream<PsInput> outStream, float4 pos, bool isOu
 	triang.pos = pos;
 
 	if (isOutline) {
-		triang.col = float4(1, 1, 1, 0.5);
+		triang.col = float4(1, 1, 1, 1.0);
 	}
 	else
 	{
@@ -78,15 +78,20 @@ void Gs(triangleadj GsInput inputs[6], inout TriangleStream<PsInput> outStream)
 		pB = inputs[i + 1].pos;
 		pC = inputs[nextI].pos;
 
-		if ((pA.x == pB.x) && (pA.y == pB.y) && (pA.z == pB.z) && (pA.w == pB.w)) continue;
-		if ((pC.x == pB.x) && (pC.y == pB.y) && (pC.z == pB.z) && (pC.w == pB.w)) continue;
+		bool drawOutline = false;
 
-		float3 viewDirection = ((pA + pB + pC) / 3).xyz;
-		viewDirection = -normalize(viewDirection);
-		float3 faceNormal = normalize(cross((pB - pA).xyz, (pC - pA).xyz));
-		dotView = dot(faceNormal, viewDirection);
+		if ((pA.x == pB.x) && (pA.y == pB.y) && (pA.z == pB.z) && (pA.w == pB.w)) drawOutline = true;
+		if (!drawOutline && (pC.x == pB.x) && (pC.y == pB.y) && (pC.z == pB.z) && (pC.w == pB.w)) drawOutline = true;
 
-		if (dotView <= 0) {
+		if (!drawOutline) {
+			float3 viewDirection = ((pA + pB + pC) / 3).xyz;
+			viewDirection = -normalize(viewDirection);
+			float3 faceNormal = normalize(cross((pB - pA).xyz, (pC - pA).xyz));
+			dotView = dot(faceNormal, viewDirection);
+			drawOutline = dotView <= 0;
+		}
+
+		if (drawOutline) {
 			for (int v = 0; v < 2; v++) {
 				float4 pos = pA + v * float4(origFaceNormal, 0) * thickness;
 				pos.z -= zbias;
