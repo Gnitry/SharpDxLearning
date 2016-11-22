@@ -63,7 +63,7 @@ namespace UwpTriangle
             var pixelScale = DisplayInformation.GetForCurrentView().LogicalDpi / 96.0f;
             var swapChainDesc = new DXGI.SwapChainDescription1()
             {
-                AlphaMode = DXGI.AlphaMode.Ignore,
+                AlphaMode = DXGI.AlphaMode.Premultiplied,
                 BufferCount = 2,
                 Flags = DXGI.SwapChainFlags.None,
                 Format = DXGI.Format.B8G8R8A8_UNorm,
@@ -114,12 +114,12 @@ namespace UwpTriangle
             _context.Rasterizer.SetViewport(viewport);
 
             ShaderBytecode shaderBytecode;
-            using (shaderBytecode = ShaderBytecode.CompileFromFile("shaders.fx", "vs", "vs_4_0", ShaderFlags.Debug))
+            using (shaderBytecode = ShaderBytecode.CompileFromFile("shaders.hlsl", "vs", "vs_5_0", ShaderFlags.Debug))
             {
                 _vertexShader = new D3D.VertexShader(_device, shaderBytecode);
             }
 
-            using (var byteCode = ShaderBytecode.CompileFromFile(@"shaders.fx", "ps", "ps_4_0", ShaderFlags.Debug))
+            using (var byteCode = ShaderBytecode.CompileFromFile(@"shaders.hlsl", "ps", "ps_5_0", ShaderFlags.Debug))
             {
                 _pixelShader = new D3D.PixelShader(_device, byteCode);
             }
@@ -132,9 +132,9 @@ namespace UwpTriangle
 
             _vertices = new[]
             {
-                new Vector4(-0.5f, 0.0f, 0.0f, 1.0f),
+                new Vector4(-0.5f, 0.0f, 0.5f, 1.0f),
                 new Vector4(0.0f, 0.5f, 0.5f, 1.0f),
-                new Vector4(0.5f, 0.0f, 0.0f, 1.0f),
+                new Vector4(0.5f, 0.0f, 0.5f, 1.0f),
             };
             _vertexBuffer = D3D.Buffer.Create(_device, D3D.BindFlags.VertexBuffer, _vertices);
             _vertexBinding = new D3D.VertexBufferBinding(_vertexBuffer, Utilities.SizeOf<Vector4>(), 0);
@@ -158,7 +158,7 @@ namespace UwpTriangle
         {
             _context.OutputMerger.SetRenderTargets(_depthStencilView, _renderView);
             _context.ClearDepthStencilView(_depthStencilView, D3D.DepthStencilClearFlags.Depth, 1.0f, 0);
-            _context.ClearRenderTargetView(_renderView, new RawColor4(1f, 0.5f, 0.2f, 1f));
+            _context.ClearRenderTargetView(_renderView, new RawColor4(0.0f, 0.0f, 0.0f, 0.0f));
 
             var view = SharpDX.Matrix.LookAtLH(new Vector3(0, 0, -5), new Vector3(0, 0, 0), Vector3.UnitY);
             var proj = SharpDX.Matrix.PerspectiveFovLH((float)Math.PI / 4.0f, (float)(panel.RenderSize.Width / panel.RenderSize.Height), 0.1f, 100.0f);

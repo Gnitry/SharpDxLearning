@@ -104,7 +104,8 @@
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
-    <Content Include="shaders.fx">
+    <Content Include="bg.jpg" />
+    <Content Include="shaders.hlsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Include="UwpTriangle_TemporaryKey.pfx" />

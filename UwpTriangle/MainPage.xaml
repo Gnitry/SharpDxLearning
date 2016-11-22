@@ -7,7 +7,8 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <SwapChainPanel x:Name="panel" Margin="8" Loaded="SwapChainPanel_OnLoaded"/>
+    <Grid Background="#888888">
+        <Image Source="bg.jpg" Stretch="Fill"/>
+        <SwapChainPanel x:Name="panel" Margin="32" Loaded="SwapChainPanel_OnLoaded" />
     </Grid>
 </Page>
